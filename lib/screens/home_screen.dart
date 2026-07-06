@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
+import '../widgets/weather_icon.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -96,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
+            WeatherIcon(iconCode: weather.icon),
             Text(
               '${weather.temperature.round()}°C',
               style: Theme.of(context).textTheme.displayLarge,
