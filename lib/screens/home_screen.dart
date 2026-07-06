@@ -49,37 +49,56 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final gradientColors = _backgroundGradientForWeather(_weather);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hava Durumu'),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: _cityController,
-              decoration: InputDecoration(
-                hintText: 'Şehir adı (örn: Istanbul)',
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _fetchWeather,
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 450),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: gradientColors,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _cityController,
+                  decoration: InputDecoration(
+                    hintText: 'Sehir adi (orn: Istanbul)',
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.9),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _fetchWeather,
+                    ),
+                  ),
+                  onSubmitted: (_) => _fetchWeather(),
                 ),
-              ),
-              onSubmitted: (_) => _fetchWeather(),
+                const SizedBox(height: 24),
+                if (_isLoading)
+                  const CircularProgressIndicator()
+                else if (_error != null)
+                  Text(_error!, style: const TextStyle(color: Colors.red))
+                else if (_weather != null)
+                  _buildWeatherCard(_weather!)
+                else
+                  const Text(
+                    'Bir sehir arayin',
+                    style: TextStyle(color: Colors.white),
+                  ),
+              ],
             ),
-            const SizedBox(height: 24),
-            if (_isLoading)
-              const CircularProgressIndicator()
-            else if (_error != null)
-              Text(_error!, style: const TextStyle(color: Colors.red))
-            else if (_weather != null)
-              _buildWeatherCard(_weather!)
-            else
-              const Text('Bir şehir arayın'),
-          ],
+          ),
         ),
       ),
     );
@@ -118,5 +137,36 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  List<Color> _backgroundGradientForWeather(WeatherModel? weather) {
+    if (weather == null) {
+      return const [Color(0xFF4A6FA5), Color(0xFF2D4A73)];
+    }
+
+    final condition = weather.condition.toLowerCase();
+
+    if (condition.contains('clear')) {
+      return const [Color(0xFFFFB347), Color(0xFFFF7E5F)];
+    }
+    if (condition.contains('cloud')) {
+      return const [Color(0xFFB0BEC5), Color(0xFF78909C)];
+    }
+    if (condition.contains('rain') || condition.contains('drizzle')) {
+      return const [Color(0xFF607D8B), Color(0xFF455A64)];
+    }
+    if (condition.contains('thunderstorm')) {
+      return const [Color(0xFF424874), Color(0xFF2C2F4A)];
+    }
+    if (condition.contains('snow')) {
+      return const [Color(0xFFE3F2FD), Color(0xFFB3E5FC)];
+    }
+    if (condition.contains('mist') ||
+        condition.contains('fog') ||
+        condition.contains('haze')) {
+      return const [Color(0xFFBDBDBD), Color(0xFF757575)];
+    }
+
+    return const [Color(0xFF64B5F6), Color(0xFF1976D2)];
   }
 }
