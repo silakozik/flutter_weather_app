@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/forecast_model.dart';
 import '../models/weather_model.dart';
 
 class WeatherService {
@@ -17,7 +18,7 @@ class WeatherService {
         );
 
         final response = await http.get(url);
-        
+
         if (response.statusCode == 200) {
             final data = jsonDecode(response.body);
             return WeatherModel.fromJson(data);
@@ -25,6 +26,29 @@ class WeatherService {
             throw Exception('City not found');
         } else {
             throw Exception('Failed to load weather data');
+        }
+    }
+
+    Future<List<ForecastDayModel>> getForecast(String cityName) async {
+        final url = Uri.https(
+            'api.openweathermap.org',
+            '/data/2.5/forecast',
+            {
+                'q': cityName,
+                'appid': apiKey,
+                'units': 'metric',
+            },
+        );
+
+        final response = await http.get(url);
+
+        if (response.statusCode == 200) {
+            final data = jsonDecode(response.body) as Map<String, dynamic>;
+            return ForecastDayModel.fromForecastJson(data);
+        } else if (response.statusCode == 404) {
+            throw Exception('City not found');
+        } else {
+            throw Exception('Failed to load forecast data');
         }
     }
 }

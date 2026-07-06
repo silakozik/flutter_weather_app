@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/forecast_model.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../widgets/weather_icon.dart';
@@ -15,6 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final WeatherService _weatherService = WeatherService();
 
   WeatherModel? _weather;
+  List<ForecastDayModel> _forecast = [];
   bool _isLoading = false;
   String? _error;
 
@@ -28,9 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final weather = await _weatherService.getWeather(city);
+      final results = await Future.wait([
+        _weatherService.getWeather(city),
+        _weatherService.getForecast(city),
+      ]);
+
       setState(() {
-        _weather = weather;
+        _weather = results[0] as WeatherModel;
+        _forecast = results[1] as List<ForecastDayModel>;
         _isLoading = false;
       });
     } catch (e) {
@@ -90,7 +97,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 else if (_error != null)
                   Text(_error!, style: const TextStyle(color: Colors.red))
                 else if (_weather != null)
-                  _buildWeatherCard(_weather!)
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildWeatherCard(_weather!),
+                          if (_forecast.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            _buildForecastList(),
+                          ],
+                        ],
+                      ),
+                    ),
+                  )
                 else
                   const Text(
                     'Bir sehir arayin',
@@ -100,6 +119,57 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildForecastList() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                '5 Günlük Tahmin',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ..._forecast.map(_buildForecastRow),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForecastRow(ForecastDayModel day) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              day.dayLabel,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          WeatherIcon(iconCode: day.icon, size: 48),
+          Expanded(
+            child: Text(
+              day.description,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          Text(
+            '${day.minTemperature.round()}° / ${day.maxTemperature.round()}°',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ],
       ),
     );
   }
